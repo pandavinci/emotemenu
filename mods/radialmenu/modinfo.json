@@ -1,11 +1,12 @@
 {
   "type": "code",
   "modid": "radialmenu",
-  "name": "radialmenu",
-  "author": "Unknown",
-  "description": "To be added",
-  "version": "1.0.0",
+  "name": "Radial Menu",
+  "author": "niciel & pandavinci",
+  "description": "Radial menu framework for other mods",
+  "side": "Client",
+  "version": "1.0.7",
   "dependency": {
-    "game": "1.16.0-rc.4"
+    "game": "1.21.0"
   }
 }

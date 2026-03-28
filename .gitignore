@@ -1,32 +1,24 @@
-bin
-obj
-releases
-.vs
-
-
-
-*.csproj
-*.exe
-*.temp
-*.dll
-*.user
-*.sln
-ICSharpCode.SharpZipLib.dll
-
-LICENSE
-modtools.command
-packages.config
-README.md
-VSModLauncher.csproj.user
-modinfo.json
-
-#folders
-releases/
-mods-dll/
-Properties/
-packages/
+# Build outputs
+bin/
 obj/
 mods-dll/
-assets/
-/updater
-/kopie
+releases/
+
+# IDE
+.vs/
+.vscode/
+*.user
+*.suo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temp files
+*.temp
+*.tmp
+*.log
+*.zip
+
+# Dependencies
+packages/

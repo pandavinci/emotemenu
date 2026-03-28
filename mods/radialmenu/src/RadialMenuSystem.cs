@@ -1,4 +1,4 @@
-﻿using SimpleRM;
+using SimpleRM;
 using System;
 using System.Collections.Generic;
 using Vintagestory.API.Client;
@@ -32,6 +32,11 @@ namespace SimpleRM
         public override bool ShouldLoad(EnumAppSide forSide)
         {
             return forSide == EnumAppSide.Client;
+        }
+
+        public override double ExecuteOrder()
+        {
+            return 0.05;
         }
 
         public override void StartClientSide(ICoreClientAPI api)

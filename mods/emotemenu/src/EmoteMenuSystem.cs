@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using emotemenu.helper;
@@ -10,15 +6,24 @@ using SimpleRM;
 
 namespace emotemenu
 {
-    public class EmoteMenuSystem : ModSystem
+    public class EmoteMenuSystem : ModSystem, IRenderer
     {
-        private static readonly string KeyCodeHandler = "radial-emote-menu";
+        private static readonly string HOTKEY_CODE = "emotemenu-open";
         private static readonly string CONFIG_FILE_NAME = "emotemenu.json";
 
+        private bool disposed = false;
         private ICoreClientAPI capi;
         private LangConfigFile lang;
         private EMConfig config;
+        private RadialMenu menu;
 
+        public double RenderOrder => 1.0;
+        public int RenderRange => 1;
+
+        public override double ExecuteOrder()
+        {
+            return 0.2;
+        }
 
         public override void StartClientSide(ICoreClientAPI api)
         {
@@ -26,8 +31,76 @@ namespace emotemenu
             this.LoadTranslations();
             this.ReloadConfig();
             this.InitEmoteMenu();
+            this.RegisterHotkey();
+            this.RegisterEvents();
+        }
 
+        private void RegisterHotkey()
+        {
+            this.capi.Input.RegisterHotKey(
+                HOTKEY_CODE,
+                this.lang.emote_properties_KeyBindDescription,
+                GlKeys.BracketRight,
+                HotkeyType.GUIOrOtherControls
+            );
+            
+            this.capi.Input.SetHotKeyHandler(HOTKEY_CODE, OnHotkeyPressed);
+            this.capi.Logger.Notification("[EmoteMenu] Hotkey registered: " + HOTKEY_CODE);
+        }
 
+        private void RegisterEvents()
+        {
+            this.capi.Event.RegisterRenderer(this, EnumRenderStage.Ortho);
+            this.capi.Event.MouseMove += OnMouseMove;
+            this.capi.Event.MouseDown += OnMouseDown;
+        }
+
+        private bool OnHotkeyPressed(KeyCombination comb)
+        {
+            if (this.menu == null) return false;
+            
+            if (this.menu.Opened)
+            {
+                this.menu.Close();
+            }
+            else
+            {
+                this.menu.Open();
+            }
+            return true;
+        }
+
+        private void OnMouseMove(MouseEvent e)
+        {
+            if (this.menu == null || !this.menu.Opened) return;
+            this.menu.MouseDeltaMove(e.DeltaX, e.DeltaY);
+            e.Handled = true;
+        }
+
+        private void OnMouseDown(MouseEvent e)
+        {
+            if (this.menu == null || !this.menu.Opened) return;
+            
+            if (e.Button == EnumMouseButton.Left)
+            {
+                this.menu.Close(true);
+            }
+            else
+            {
+                this.menu.Close(false);
+            }
+            e.Handled = true;
+        }
+
+        public void OnRenderFrame(float deltaTime, EnumRenderStage stage)
+        {
+            if (this.menu == null || !this.menu.Opened) return;
+            
+            if (this.capi.Render.CurrentActiveShader == null)
+            {
+                this.capi.Render.GetEngineShader(EnumShaderProgram.Gui).Use();
+            }
+            this.menu.OnRender(deltaTime);
         }
 
         protected void LoadTranslations()
@@ -35,102 +108,109 @@ namespace emotemenu
             string str = this.capi.Settings.String["language"];
             try
             {
-                this.lang = ((ICoreAPI)this.capi).Assets.Get<LangConfigFile>(new AssetLocation("emotemenu", "lang/" + str + ".json"));
-                this.capi.Logger.DebugMod("loaded language file: " + str + ".json");
+                this.lang = this.capi.Assets.Get<LangConfigFile>(new AssetLocation("emotemenu", "lang/" + str + ".json"));
+                this.capi.Logger.Debug("[EmoteMenu] Loaded language file: " + str + ".json");
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                ((ICoreAPI)this.capi).Logger.DebugMod("cannot load language: '" + str);
-                ((ICoreAPI)this.capi).Logger.DebugMod("create default one");
+                this.capi.Logger.Debug("[EmoteMenu] Cannot load language: " + str + ", using default");
                 this.lang = new LangConfigFile();
             }
         }
 
         protected void InitEmoteMenu()
         {
-
             float scale = this.config.scale;
-            RadialMenu menu = new RadialMenu(this.capi, (int)(100.0 * (double)scale), (int)(200.0 * (double)scale));
-            DefaulInnerCircleRenderer dicr = new DefaulInnerCircleRenderer(this.capi , (int) (100*scale));
-            menu.Gape = (int)(5.0 * (double)scale);
+            this.menu = new RadialMenu(this.capi, (int)(100.0 * scale), (int)(200.0 * scale));
+            this.menu.Gape = (int)(5.0 * scale);
+            
             if (this.config.show_middle_circle)
             {
-                menu.AddElement((IRadialElement)this.BuildElement("wave", (Action)(() => dicr.DisplayedText = this.lang.emote_menu_wave)));
-                menu.AddElement((IRadialElement)this.BuildElement("cheer", (Action)(() => dicr.DisplayedText = this.lang.emote_menu_cheer)));
-                menu.AddElement((IRadialElement)this.BuildElement("shrug", (Action)(() => dicr.DisplayedText = this.lang.emote_menu_shrug)));
-                menu.AddElement((IRadialElement)this.BuildElement("cry", (Action)(() => dicr.DisplayedText = this.lang.emote_menu_cry)));
-                menu.AddElement((IRadialElement)this.BuildElement("nod", (Action)(() => dicr.DisplayedText = this.lang.emote_menu_nod)));
-                menu.AddElement((IRadialElement)this.BuildElement("facepalm", (Action)(() => dicr.DisplayedText = this.lang.emote_menu_facepalm)));
-                menu.AddElement((IRadialElement)this.BuildElement("bow", (Action)(() => dicr.DisplayedText = this.lang.emote_menu_bow)));
-                menu.AddElement((IRadialElement)this.BuildElement("laugh", (Action)(() => dicr.DisplayedText = this.lang.emote_menu_laugh)));
-                menu.AddElement((IRadialElement)this.BuildElement("rage", (Action)(() => dicr.DisplayedText = this.lang.emote_menu_rage)));
-                dicr = new DefaulInnerCircleRenderer(this.capi, 6);
-                dicr.Gape = (int)(8.0 * (double)scale);
-                menu.InnerRenderer = (InnerCircleRenderer) dicr;
+                var innerCircle = new DefaulInnerCircleRenderer(this.capi, 6);
+                innerCircle.Gape = (int)(8.0 * scale);
+                this.menu.InnerRenderer = innerCircle;
+                
+                this.menu.AddElement(this.BuildElement("wave", () => innerCircle.DisplayedText = this.lang.emote_menu_wave));
+                this.menu.AddElement(this.BuildElement("cheer", () => innerCircle.DisplayedText = this.lang.emote_menu_cheer));
+                this.menu.AddElement(this.BuildElement("shrug", () => innerCircle.DisplayedText = this.lang.emote_menu_shrug));
+                this.menu.AddElement(this.BuildElement("cry", () => innerCircle.DisplayedText = this.lang.emote_menu_cry));
+                this.menu.AddElement(this.BuildElement("nod", () => innerCircle.DisplayedText = this.lang.emote_menu_nod));
+                this.menu.AddElement(this.BuildElement("facepalm", () => innerCircle.DisplayedText = this.lang.emote_menu_facepalm));
+                this.menu.AddElement(this.BuildElement("bow", () => innerCircle.DisplayedText = this.lang.emote_menu_bow));
+                this.menu.AddElement(this.BuildElement("laugh", () => innerCircle.DisplayedText = this.lang.emote_menu_laugh));
+                this.menu.AddElement(this.BuildElement("rage", () => innerCircle.DisplayedText = this.lang.emote_menu_rage));
             }
             else
             {
-                menu.AddElement((IRadialElement)this.BuildElement("wave", (Action)null));
-                menu.AddElement((IRadialElement)this.BuildElement("cheer", (Action)null));
-                menu.AddElement((IRadialElement)this.BuildElement("shrug", (Action)null));
-                menu.AddElement((IRadialElement)this.BuildElement("cry", (Action)null));
-                menu.AddElement((IRadialElement)this.BuildElement("nod", (Action)null));
-                menu.AddElement((IRadialElement)this.BuildElement("facepalm", (Action)null));
-                menu.AddElement((IRadialElement)this.BuildElement("bow", (Action)null));
-                menu.AddElement((IRadialElement)this.BuildElement("laugh", (Action)null));
-                menu.AddElement((IRadialElement)this.BuildElement("rage", (Action)null));
+                this.menu.AddElement(this.BuildElement("wave", null));
+                this.menu.AddElement(this.BuildElement("cheer", null));
+                this.menu.AddElement(this.BuildElement("shrug", null));
+                this.menu.AddElement(this.BuildElement("cry", null));
+                this.menu.AddElement(this.BuildElement("nod", null));
+                this.menu.AddElement(this.BuildElement("facepalm", null));
+                this.menu.AddElement(this.BuildElement("bow", null));
+                this.menu.AddElement(this.BuildElement("laugh", null));
+                this.menu.AddElement(this.BuildElement("rage", null));
             }
-            menu.Rebuild();
-            bool mouseBinding;
-            int bindID;
-            if (Enum.TryParse<EnumMouseButton>(this.config.button_mouse_binding, out EnumMouseButton result))
-            {
-                mouseBinding = true;
-                bindID = (int)result;
-            }
-            else
-            {
-                mouseBinding = false;
-                this.capi.Input.RegisterHotKey(EmoteMenuSystem.KeyCodeHandler, 
-                    this.lang.emote_properties_KeyBindDescription, (GlKeys)93, (HotkeyType)1, false, false, false);
-                bindID = this.capi.Input.HotKeys[EmoteMenuSystem.KeyCodeHandler].CurrentMapping.KeyCode;
-            }
-            RadialMenuSystem radialmenu = capi.ModLoader.GetModSystem<RadialMenuSystem>();
-            radialmenu.RegisterButtonRadialMenu(new RadialItemMenu("emoteMenu", menu, mouseBinding, bindID));
+            this.menu.Rebuild();
+            this.capi.Logger.Notification("[EmoteMenu] Menu initialized with " + this.menu.ElementsCount() + " emotes");
         }
 
         protected void ReloadConfig()
         {
             try
             {
-                this.config = ((ICoreAPICommon)this.capi).LoadModConfig<EMConfig>(EmoteMenuSystem.CONFIG_FILE_NAME);
-                if (this.config != null)
-                    return;
-                this.config = new EMConfig();
-                ((ICoreAPICommon)this.capi).StoreModConfig<EMConfig>(this.config, EmoteMenuSystem.CONFIG_FILE_NAME);
+                this.config = this.capi.LoadModConfig<EMConfig>(CONFIG_FILE_NAME);
+                if (this.config == null)
+                {
+                    this.config = new EMConfig();
+                    this.capi.StoreModConfig(this.config, CONFIG_FILE_NAME);
+                }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                ((ICoreAPI)this.capi).Logger.DebugMod("cannot Load emotemenu config, default instantiated");
+                this.capi.Logger.Debug("[EmoteMenu] Cannot load config, using default");
                 this.config = new EMConfig();
             }
         }
 
-        private RadialElementPosition BuildElement(string command, Action hangeText)
+        private RadialElementPosition BuildElement(string command, Action onHover)
         {
             AssetLocation assetLocation = new AssetLocation("emotemenu", "textures/" + command + ".png");
             LoadedTexture icon = new LoadedTexture(this.capi);
             this.capi.Render.GetOrLoadTexture(assetLocation, ref icon);
-            RadialElementPosition radialElementPosition = new RadialElementPosition(this.capi, icon, (Action)(() => this.capi.SendChatMessage("/emote " + command, (string)null)));
-            if (hangeText != null)
-                radialElementPosition.HoverEvent = (Action<bool>)(hover =>
+            
+            RadialElementPosition element = new RadialElementPosition(
+                this.capi, 
+                icon, 
+                () => this.capi.SendChatMessage("/emote " + command)
+            );
+            
+            if (onHover != null)
+            {
+                element.HoverEvent = (hover) =>
                 {
-                    if (!hover)
-                        return;
-                    hangeText();
-                });
-            return radialElementPosition;
+                    if (hover) onHover();
+                };
+            }
+            
+            return element;
         }
 
+        public override void Dispose()
+        {
+            if (this.disposed) return;
+            this.disposed = true;
+            
+            if (this.capi != null)
+            {
+                this.capi.Event.UnregisterRenderer(this, EnumRenderStage.Ortho);
+                this.capi.Event.MouseMove -= OnMouseMove;
+                this.capi.Event.MouseDown -= OnMouseDown;
+            }
+            
+            this.menu?.Dispose();
+            base.Dispose();
+        }
     }
 }
