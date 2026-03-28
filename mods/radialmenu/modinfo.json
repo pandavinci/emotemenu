@@ -3,7 +3,7 @@
   "modid": "radialmenu",
   "name": "Radial Menu",
   "author": "niciel & pandavinci",
-  "description": "Radial menu framework for other mods",
+  "description": "Client-side radial menu framework. Required dependency for EmoteMenu.",
   "side": "Client",
   "version": "1.0.7",
   "dependency": {

@@ -6,9 +6,7 @@ Keybind is configurable in Settings → Controls.
 
 ## Installation
 
-Drop both zips into your `Mods` folder:
-- `RadialMenu-1.0.7.zip`
-- `EmoteMenu-1.0.7.zip`
+Drop `EmoteMenu-1.0.7.zip` into your `Mods` folder.
 
 ## Building from Source
 

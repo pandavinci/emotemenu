@@ -12,6 +12,7 @@ namespace emotemenu
         private static readonly string CONFIG_FILE_NAME = "emotemenu.json";
 
         private bool disposed = false;
+        private bool hotkeyHeld = false;
         private ICoreClientAPI capi;
         private LangConfigFile lang;
         private EMConfig config;
@@ -53,21 +54,34 @@ namespace emotemenu
             this.capi.Event.RegisterRenderer(this, EnumRenderStage.Ortho);
             this.capi.Event.MouseMove += OnMouseMove;
             this.capi.Event.MouseDown += OnMouseDown;
+            this.capi.Event.KeyUp += OnKeyUp;
         }
 
         private bool OnHotkeyPressed(KeyCombination comb)
         {
             if (this.menu == null) return false;
             
+            if (this.hotkeyHeld) return true;
+            this.hotkeyHeld = true;
+            
             if (this.menu.Opened)
             {
-                this.menu.Close();
+                this.menu.Close(false);
             }
             else
             {
                 this.menu.Open();
             }
             return true;
+        }
+
+        private void OnKeyUp(KeyEvent e)
+        {
+            var hotkey = this.capi.Input.HotKeys[HOTKEY_CODE];
+            if (hotkey != null && e.KeyCode == hotkey.CurrentMapping.KeyCode)
+            {
+                this.hotkeyHeld = false;
+            }
         }
 
         private void OnMouseMove(MouseEvent e)
@@ -207,6 +221,7 @@ namespace emotemenu
                 this.capi.Event.UnregisterRenderer(this, EnumRenderStage.Ortho);
                 this.capi.Event.MouseMove -= OnMouseMove;
                 this.capi.Event.MouseDown -= OnMouseDown;
+                this.capi.Event.KeyUp -= OnKeyUp;
             }
             
             this.menu?.Dispose();

@@ -1,13 +1,12 @@
 {
   "type": "code",
-  "modid": "emotemenu",
+  "modid": "emotemenupatched2",
   "name": "Emote Menu",
-  "author": "niciel & pandavinci",
-  "description": "Emote wheel menu for quick emote access",
+  "authors": ["niciel", "pandavinci"],
+  "description": "Quick access radial emote wheel. Press ] to open, move mouse to select, click to emote. Keybind configurable in Settings.",
   "side": "Client",
   "version": "1.0.7",
-  "dependency": {
-    "game": "1.21.0",
-    "radialmenu": ""
+  "dependencies": {
+    "game": "1.21.6"
   }
 }

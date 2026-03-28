@@ -23,10 +23,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Reference Include="radialmenu">
-      <HintPath>..\..\mods-dll\radialmenu.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
     <Reference Include="VintagestoryAPI">
       <HintPath>$(VINTAGE_STORY)\VintagestoryAPI.dll</HintPath>
       <Private>false</Private>
@@ -45,6 +41,10 @@
     </Reference>
     <Reference Include="Newtonsoft.Json">
       <HintPath>$(VINTAGE_STORY)\Lib\Newtonsoft.Json.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="cairo-sharp">
+      <HintPath>$(VINTAGE_STORY)\Lib\cairo-sharp.dll</HintPath>
       <Private>false</Private>
     </Reference>
   </ItemGroup>
