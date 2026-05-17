@@ -3,7 +3,7 @@ set -e
 
 # Configuration
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-EMOTEMENU_VERSION="1.0.7"
+EMOTEMENU_VERSION="1.0.8"
 
 # Auto-detect Vintage Story installation
 if [ -z "$VINTAGE_STORY" ]; then
