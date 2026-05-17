@@ -53,7 +53,8 @@ namespace emotemenu
         {
             this.capi.Event.RegisterRenderer(this, EnumRenderStage.Ortho);
             this.capi.Event.MouseMove += OnMouseMove;
-            this.capi.Event.MouseDown += OnMouseDown;
+            this.capi.Event.MouseDown += OnMenuMouseDown;
+            this.capi.Event.MouseUp += OnMouseUp;
             this.capi.Event.KeyUp += OnKeyUp;
         }
 
@@ -84,6 +85,18 @@ namespace emotemenu
             }
         }
 
+        private void OnMouseUp(MouseEvent e)
+        {
+            var hotkey = this.capi.Input.HotKeys[HOTKEY_CODE];
+            if (hotkey == null) return;
+            
+            int mouseKeyCode = KeyCombination.MouseStart + (int)e.Button;
+            if (hotkey.CurrentMapping.KeyCode == mouseKeyCode)
+            {
+                this.hotkeyHeld = false;
+            }
+        }
+
         private void OnMouseMove(MouseEvent e)
         {
             if (this.menu == null || !this.menu.Opened) return;
@@ -91,7 +104,7 @@ namespace emotemenu
             e.Handled = true;
         }
 
-        private void OnMouseDown(MouseEvent e)
+        private void OnMenuMouseDown(MouseEvent e)
         {
             if (this.menu == null || !this.menu.Opened) return;
             
@@ -220,7 +233,8 @@ namespace emotemenu
             {
                 this.capi.Event.UnregisterRenderer(this, EnumRenderStage.Ortho);
                 this.capi.Event.MouseMove -= OnMouseMove;
-                this.capi.Event.MouseDown -= OnMouseDown;
+                this.capi.Event.MouseDown -= OnMenuMouseDown;
+                this.capi.Event.MouseUp -= OnMouseUp;
                 this.capi.Event.KeyUp -= OnKeyUp;
             }
             
