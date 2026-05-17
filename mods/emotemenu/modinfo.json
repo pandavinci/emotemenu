@@ -5,8 +5,8 @@
   "authors": ["niciel", "pandavinci"],
   "description": "Quick access radial emote wheel. Press ] to open, move mouse to select, click to emote. Keybind configurable in Settings.",
   "side": "Client",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "dependencies": {
-    "game": "1.21.6"
+    "game": "1.22.2"
   }
 }
